@@ -21,32 +21,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') generatePlatformMenu();
     });
 
-    /**
-     * Universal Trend & Media Dictionary:
-     * Covers modern music styles, streaming/gaming memes, and edit subcultures.
-     */
     const mediaDictionary = {
-        // Music & Audio Styles
-        'phonk': { context: 'drift phonk bass boost mix audio', tag: 'phonkedit' },
-        'slowed': { context: 'slowed and reverb audio remix', tag: 'slowedreverb' },
-        'drill': { context: 'uk drill ny drill beat drop edit', tag: 'drilledit' },
-        'rage': { context: 'rage beat synth loop underground rap', tag: 'rageedit' },
-        
-        // Trending Shorthands & Catalogs
-        'bp': { context: 'Blackpink trend audio remix beat drop', tag: 'bpedit' },
-        'dave': { context: 'Dave rap vocal sync audio track', tag: 'daveedit' },
-        'sza': { context: 'SZA soulful vocal track snooze kill bill', tag: 'szaedit' },
-        
-        // Streamer & Gaming Culture
-        'speed': { context: 'IShowSpeed screaming meme edit audio', tag: 'speededit' },
-        'kai': { context: 'Kai Cenat stream funny moments edit', tag: 'kaicenatedit' },
-        'fn': { context: 'Fortnite montage cinematic edit audio', tag: 'fortniteedit' },
-        'val': { context: 'Valorant clips montage phonk edit', tag: 'valorantedit' }
+        'phonk': { context: 'drift phonk bass boost mix audio' },
+        'slowed': { context: 'slowed and reverb audio remix' },
+        'drill': { context: 'uk drill ny drill beat drop edit' },
+        'rage': { context: 'rage beat synth loop underground rap' },
+        'bp': { context: 'Blackpink trend audio remix beat drop' },
+        'dave': { context: 'Dave rap vocal sync audio track' },
+        'sza': { context: 'SZA soulful vocal track snooze kill bill' },
+        'speed': { context: 'IShowSpeed screaming meme edit audio' },
+        'kai': { context: 'Kai Cenat stream funny moments edit' },
+        'fn': { context: 'Fortnite montage cinematic edit audio' },
+        'val': { context: 'Valorant clips montage phonk edit' }
     };
 
     /**
      * Universal Intent Compiler:
-     * Automatically expands any trendy prompt into platform-optimized search queries.
+     * Builds native search strings for YouTube, TikTok, and Instagram Keyword Search.
      */
     function compileIntent(rawInput) {
         const clean = rawInput.trim().toLowerCase();
@@ -58,40 +49,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const subject = words.slice(0, -1).join(' ');
 
         let resolvedContext = lastWord;
-        let instagramSuffix = lastWord;
 
-        // Check if the trailing term matches our media/trend dictionary
         if (mediaDictionary[lastWord]) {
             resolvedContext = mediaDictionary[lastWord].context;
-            instagramSuffix = mediaDictionary[lastWord].tag;
         } else if (words.length >= 2) {
-            // Universal fallback for new/unknown trends: treat last word as a style/audio modifier
             resolvedContext = `${lastWord} edit remix audio`;
-            instagramSuffix = `${lastWord}edit`;
         } else {
             resolvedContext = `${lastWord} edit trend audio`;
-            instagramSuffix = `${lastWord}edit`;
         }
 
         let youtubeQuery = '';
         let tiktokQuery = '';
-        let instagramTag = '';
+        let instagramQuery = '';
 
         if (subject) {
             youtubeQuery = `"${subject}" ("${resolvedContext}" OR "${lastWord}") edit`;
             tiktokQuery = `${subject} ${lastWord} edit audio`;
-            instagramTag = `${subject.replace(/[^a-z0-9]/g, '')}${instagramSuffix}`;
+            // Instagram Keyword Search across captions, audio & transcriptions
+            instagramQuery = `${subject} ${lastWord} edit`;
         } else {
             youtubeQuery = `"${lastWord}" edit remix audio`;
             tiktokQuery = `${lastWord} edit trend audio`;
-            instagramTag = instagramSuffix;
+            instagramQuery = `${lastWord} edit`;
         }
 
         return {
             displayTerm: rawInput,
             youtube: youtubeQuery,
             tiktok: tiktokQuery,
-            instagramTag: instagramTag.replace(/[^a-z0-9]/g, '')
+            instagram: instagramQuery
         };
     }
 
@@ -124,10 +110,10 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             {
                 name: 'Instagram Reels',
-                tag: 'Reels Edit Route',
+                tag: 'Universal Reels Index',
                 color: '#E1306C',
-                description: `Compiled Tag Route: #${intent.instagramTag}`,
-                url: `https://www.instagram.com/explore/tags/${encodeURIComponent(intent.instagramTag)}/`,
+                description: `Compiled Keyword Query: "${intent.instagram}"`,
+                url: `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(intent.instagram)}`,
                 actionText: 'Search Reels ↗'
             }
         ];
