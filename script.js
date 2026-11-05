@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsGrid = document.getElementById('resultsGrid');
     const searchTitle = document.getElementById('searchTitle');
 
-    // Toggle clear button visibility
     searchInput.addEventListener('input', () => {
         clearBtn.classList.toggle('visible', searchInput.value.trim().length > 0);
     });
@@ -17,51 +16,71 @@ document.addEventListener('DOMContentLoaded', () => {
         resetMenu();
     });
 
-    // Render multi-platform options on search submit
     searchBtn.addEventListener('click', generatePlatformMenu);
     searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') generatePlatformMenu();
     });
 
+    // Smart query generator: transforms raw prompts into intent-driven queries
+    function buildSmartQueries(rawInput) {
+        const query = rawInput.trim();
+        const terms = query.split(/\s+/);
+
+        // If the user entered multiple words (e.g., "paul george sza")
+        if (terms.length >= 2) {
+            return {
+                // YouTube: force intent towards edits/audio mashups
+                youtube: `${query} edit OR audio OR song`,
+                // TikTok: format for creator/audio crossover trends
+                tiktok: `${query} edit audio`,
+                // Instagram: combined hashtag for niche edit communities
+                instagramHashtag: query.replace(/[^a-zA-Z0-9]/g, '') + 'edit'
+            };
+        }
+
+        return {
+            youtube: `${query} edit`,
+            tiktok: `${query} edit`,
+            instagramHashtag: query.replace(/[^a-zA-Z0-9]/g, '')
+        };
+    }
+
     function generatePlatformMenu() {
-        const query = searchInput.value.trim();
-        if (!query) return;
+        const rawInput = searchInput.value.trim();
+        if (!rawInput) return;
 
-        const encodedQuery = encodeURIComponent(query);
-        const cleanHashtag = query.replace(/[^a-zA-Z0-9]/g, '');
+        const smart = buildSmartQueries(rawInput);
 
-        searchTitle.textContent = `Search options for "${query}":`;
+        searchTitle.textContent = `Smart routes for "${rawInput}":`;
         resultsGrid.innerHTML = '';
 
-        // Define platform routes
         const platforms = [
             {
                 name: 'YouTube',
-                tag: 'Videos & Shorts',
+                tag: 'Edits & Audio Syncs',
                 color: '#FF0000',
-                description: 'Search full edits, compilations, and high-quality YouTube Shorts.',
-                url: `https://www.youtube.com/results?search_query=${encodedQuery}`,
+                description: `Find videos & edits featuring ${rawInput} synced with song/audio tracks.`,
+                url: `https://www.youtube.com/results?search_query=${encodeURIComponent(smart.youtube)}`,
                 actionText: 'Search YouTube ↗'
             },
             {
                 name: 'TikTok',
-                tag: 'Trends & Sounds',
+                tag: 'Viral Audio & Clips',
                 color: '#00F2FE',
-                description: 'Discover viral video clips, audio mashups, and trending edits.',
-                url: `https://www.tiktok.com/search?q=${encodedQuery}`,
+                description: `Search TikTok for trends combining ${rawInput} with background music.`,
+                url: `https://www.tiktok.com/search?q=${encodeURIComponent(smart.tiktok)}`,
                 actionText: 'Search TikTok ↗'
             },
             {
                 name: 'Instagram Reels',
-                tag: 'Reels & Hashtags',
+                tag: 'Reels & Community Edits',
                 color: '#E1306C',
-                description: 'Explore Instagram Reels and audio pages tagged with this theme.',
-                url: `https://www.instagram.com/explore/tags/${cleanHashtag}/`,
+                description: `Explore Instagram edit tags and reels for #${smart.instagramHashtag}.`,
+                url: `https://www.instagram.com/explore/tags/${encodeURIComponent(smart.instagramHashtag)}/`,
                 actionText: 'Search Reels ↗'
             }
         ];
 
-        // Render clean, interactive platform menu cards
         platforms.forEach(p => {
             const card = document.createElement('div');
             card.className = 'menu-card';
