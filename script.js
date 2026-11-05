@@ -1,123 +1,90 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Element Selectors
     const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
     const clearBtn = document.getElementById('clearBtn');
-    const feedbackContent = document.getElementById('feedbackContent');
-    
-    const btnYoutube = document.getElementById('searchYoutube');
-    const btnTiktok = document.getElementById('searchTiktok');
-    const btnInstagram = document.getElementById('searchInstagram');
+    const resultsGrid = document.getElementById('resultsGrid');
+    const searchTitle = document.getElementById('searchTitle');
 
-    // Input Clear Button Visibility Toggle
+    // Toggle clear button visibility
     searchInput.addEventListener('input', () => {
-        if (searchInput.value.trim().length > 0) {
-            clearBtn.classList.add('visible');
-        } else {
-            clearBtn.classList.remove('visible');
-        }
+        clearBtn.classList.toggle('visible', searchInput.value.trim().length > 0);
     });
 
     clearBtn.addEventListener('click', () => {
         searchInput.value = '';
         clearBtn.classList.remove('visible');
         searchInput.focus();
-        showPlaceholder();
+        resetMenu();
     });
 
-    // Enter Key Handler (Defaults to YouTube)
-    searchInput.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            dispatchSearch('youtube');
-        }
+    // Render multi-platform options on search submit
+    searchBtn.addEventListener('click', generatePlatformMenu);
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') generatePlatformMenu();
     });
 
-    // Platform Button Event Listeners
-    btnYoutube.addEventListener('click', () => dispatchSearch('youtube'));
-    btnTiktok.addEventListener('click', () => dispatchSearch('tiktok'));
-    btnInstagram.addEventListener('click', () => dispatchSearch('instagram'));
+    function generatePlatformMenu() {
+        const query = searchInput.value.trim();
+        if (!query) return;
 
-    /**
-     * Search Dispatch Router
-     * @param {string} platform - 'youtube' | 'tiktok' | 'instagram'
-     */
-    function dispatchSearch(platform) {
-        const rawQuery = searchInput.value.trim();
+        const encodedQuery = encodeURIComponent(query);
+        const cleanHashtag = query.replace(/[^a-zA-Z0-9]/g, '');
 
-        if (!rawQuery) {
-            renderMessage('Please enter a search phrase first (e.g., "Kyrie Irving Dave edit").', 'error');
-            searchInput.focus();
-            return;
-        }
+        searchTitle.textContent = `Search options for "${query}":`;
+        resultsGrid.innerHTML = '';
 
-        const encodedQuery = encodeURIComponent(rawQuery);
-
-        switch (platform) {
-            case 'youtube': {
-                const targetUrl = `https://www.youtube.com/results?search_query=${encodedQuery}`;
-                window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                renderMessage(`Routing search for "<strong>${escapeHtml(rawQuery)}</strong>" to YouTube...`, 'success');
-                break;
+        // Define platform routes
+        const platforms = [
+            {
+                name: 'YouTube',
+                tag: 'Videos & Shorts',
+                color: '#FF0000',
+                description: 'Search full edits, compilations, and high-quality YouTube Shorts.',
+                url: `https://www.youtube.com/results?search_query=${encodedQuery}`,
+                actionText: 'Search YouTube ↗'
+            },
+            {
+                name: 'TikTok',
+                tag: 'Trends & Sounds',
+                color: '#00F2FE',
+                description: 'Discover viral video clips, audio mashups, and trending edits.',
+                url: `https://www.tiktok.com/search?q=${encodedQuery}`,
+                actionText: 'Search TikTok ↗'
+            },
+            {
+                name: 'Instagram Reels',
+                tag: 'Reels & Hashtags',
+                color: '#E1306C',
+                description: 'Explore Instagram Reels and audio pages tagged with this theme.',
+                url: `https://www.instagram.com/explore/tags/${cleanHashtag}/`,
+                actionText: 'Search Reels ↗'
             }
+        ];
 
-            case 'tiktok': {
-                const targetUrl = `https://www.tiktok.com/search?q=${encodedQuery}`;
-                window.open(targetUrl, '_blank', 'noopener,noreferrer');
-                renderMessage(`Routing search for "<strong>${escapeHtml(rawQuery)}</strong>" to TikTok...`, 'success');
-                break;
-            }
-
-            case 'instagram': {
-                // Instagram limits direct web search URLs for general terms.
-                const fallbackUrl = `https://www.instagram.com/`;
-                renderInstagramLimitation(rawQuery, fallbackUrl);
-                break;
-            }
-
-            default:
-                renderMessage('Selected platform is not supported.', 'error');
-        }
-    }
-
-    /**
-     * Specialized Handler for Instagram Limitations
-     */
-    function renderInstagramLimitation(query, fallbackUrl) {
-        feedbackContent.innerHTML = `
-            <div class="status-message">
-                <p><strong>Instagram Search Notice:</strong> Instagram web requires users to be logged in to execute specific term searches directly.</p>
-                <div class="status-actions">
-                    <button type="button" id="copyPhraseBtn" class="secondary-btn">Copy Search Phrase</button>
-                    <a href="${fallbackUrl}" target="_blank" rel="noopener noreferrer" class="secondary-btn">Open Instagram Web ↗</a>
+        // Render clean, interactive platform menu cards
+        platforms.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'menu-card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="platform-badge" style="background-color: ${p.color};">${p.name}</span>
+                    <span class="platform-tag">${p.tag}</span>
                 </div>
-            </div>
-        `;
-
-        const copyBtn = document.getElementById('copyPhraseBtn');
-        copyBtn.addEventListener('click', async () => {
-            try {
-                await navigator.clipboard.writeText(query);
-                copyBtn.textContent = 'Copied to Clipboard! ✓';
-            } catch (err) {
-                copyBtn.textContent = 'Failed to copy';
-            }
+                <p class="card-desc">${p.description}</p>
+                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="platform-btn">
+                    ${p.actionText}
+                </a>
+            `;
+            resultsGrid.appendChild(card);
         });
     }
 
-    function renderMessage(htmlText, type) {
-        feedbackContent.innerHTML = `<p class="status-message ${type}">${htmlText}</p>`;
-    }
-
-    function showPlaceholder() {
-        feedbackContent.innerHTML = `<p class="placeholder-text">Type a phrase above and choose a platform to launch your search.</p>`;
-    }
-
-    function escapeHtml(str) {
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function resetMenu() {
+        searchTitle.textContent = 'Select a Platform to Search';
+        resultsGrid.innerHTML = `
+            <div class="placeholder-msg">
+                <p>Type a phrase above and click Explore to generate search routes.</p>
+            </div>
+        `;
     }
 });
