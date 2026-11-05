@@ -1,0 +1,7 @@
+{
+  "name": "video-discovery-app",
+  "version": "1.0.0",
+  "description": "Video Discovery Engine Powered by Vercel Serverless",
+  "main": "api/search.js",
+  "dependencies": {}
+}
