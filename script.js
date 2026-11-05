@@ -22,8 +22,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     /**
-     * Intent Compiler: Parses multi-subject queries (e.g. "paul george sza")
-     * into target search strings tailored to each platform's indexing rules.
+     * Universal Trend & Media Dictionary:
+     * Covers modern music styles, streaming/gaming memes, and edit subcultures.
+     */
+    const mediaDictionary = {
+        // Music & Audio Styles
+        'phonk': { context: 'drift phonk bass boost mix audio', tag: 'phonkedit' },
+        'slowed': { context: 'slowed and reverb audio remix', tag: 'slowedreverb' },
+        'drill': { context: 'uk drill ny drill beat drop edit', tag: 'drilledit' },
+        'rage': { context: 'rage beat synth loop underground rap', tag: 'rageedit' },
+        
+        // Trending Shorthands & Catalogs
+        'bp': { context: 'Blackpink trend audio remix beat drop', tag: 'bpedit' },
+        'dave': { context: 'Dave rap vocal sync audio track', tag: 'daveedit' },
+        'sza': { context: 'SZA soulful vocal track snooze kill bill', tag: 'szaedit' },
+        
+        // Streamer & Gaming Culture
+        'speed': { context: 'IShowSpeed screaming meme edit audio', tag: 'speededit' },
+        'kai': { context: 'Kai Cenat stream funny moments edit', tag: 'kaicenatedit' },
+        'fn': { context: 'Fortnite montage cinematic edit audio', tag: 'fortniteedit' },
+        'val': { context: 'Valorant clips montage phonk edit', tag: 'valorantedit' }
+    };
+
+    /**
+     * Universal Intent Compiler:
+     * Automatically expands any trendy prompt into platform-optimized search queries.
      */
     function compileIntent(rawInput) {
         const clean = rawInput.trim().toLowerCase();
@@ -31,42 +54,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (words.length === 0) return null;
 
+        const lastWord = words[words.length - 1];
+        const subject = words.slice(0, -1).join(' ');
+
+        let resolvedContext = lastWord;
+        let instagramSuffix = lastWord;
+
+        // Check if the trailing term matches our media/trend dictionary
+        if (mediaDictionary[lastWord]) {
+            resolvedContext = mediaDictionary[lastWord].context;
+            instagramSuffix = mediaDictionary[lastWord].tag;
+        } else if (words.length >= 2) {
+            // Universal fallback for new/unknown trends: treat last word as a style/audio modifier
+            resolvedContext = `${lastWord} edit remix audio`;
+            instagramSuffix = `${lastWord}edit`;
+        } else {
+            resolvedContext = `${lastWord} edit trend audio`;
+            instagramSuffix = `${lastWord}edit`;
+        }
+
         let youtubeQuery = '';
         let tiktokQuery = '';
-        let instagramHashtags = [];
+        let instagramTag = '';
 
-        if (words.length >= 2) {
-            // Split into primary subject (first terms) and secondary/audio context (last term)
-            const audioContext = words[words.length - 1];
-            const subject = words.slice(0, words.length - 1).join(' ');
-
-            // YouTube: Force exact subject match + Boolean audio/edit context
-            youtubeQuery = `"${subject}" ("${audioContext}" OR "audio" OR "song") (edit OR mix OR audio)`;
-            
-            // TikTok: Target sound edits and video crossover trends
-            tiktokQuery = `${subject} edit sound ${audioContext} audio`;
-
-            // Instagram: Clean hashtag mashups
-            const cleanSubject = subject.replace(/[^a-z0-9]/g, '');
-            const cleanAudio = audioContext.replace(/[^a-z0-9]/g, '');
-            
-            instagramHashtags = [
-                `${cleanSubject}edit`,
-                `${cleanSubject}x${cleanAudio}`,
-                `${cleanSubject}`
-            ];
+        if (subject) {
+            youtubeQuery = `"${subject}" ("${resolvedContext}" OR "${lastWord}") edit`;
+            tiktokQuery = `${subject} ${lastWord} edit audio`;
+            instagramTag = `${subject.replace(/[^a-z0-9]/g, '')}${instagramSuffix}`;
         } else {
-            // Single word prompt (e.g. "kyrie")
-            const word = words[0];
-            youtubeQuery = `"${word}" (edit OR audio OR highlights OR mix)`;
-            tiktokQuery = `${word} edit audio sound`;
-            instagramHashtags = [`${word}edit`, `${word}`];
+            youtubeQuery = `"${lastWord}" edit remix audio`;
+            tiktokQuery = `${lastWord} edit trend audio`;
+            instagramTag = instagramSuffix;
         }
 
         return {
+            displayTerm: rawInput,
             youtube: youtubeQuery,
             tiktok: tiktokQuery,
-            instagramTag: instagramHashtags[0]
+            instagramTag: instagramTag.replace(/[^a-z0-9]/g, '')
         };
     }
 
@@ -77,13 +102,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const intent = compileIntent(rawInput);
         if (!intent) return;
 
-        searchTitle.textContent = `Compiled matches for "${rawInput}":`;
+        searchTitle.textContent = `Trending Routes for "${rawInput}":`;
         resultsGrid.innerHTML = '';
 
         const platforms = [
             {
                 name: 'YouTube',
-                tag: 'Boolean Audio Sync Query',
+                tag: 'Audio-Matched Query',
                 color: '#FF0000',
                 description: `Compiled Query: ${intent.youtube}`,
                 url: `https://www.youtube.com/results?search_query=${encodeURIComponent(intent.youtube)}`,
@@ -91,15 +116,15 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             {
                 name: 'TikTok',
-                tag: 'Audio & Sound Matching',
+                tag: 'Viral Sound Sync',
                 color: '#00F2FE',
-                description: `Compiled Query: "${intent.tiktok}"`,
+                description: `Compiled Query: ${intent.tiktok}`,
                 url: `https://www.tiktok.com/search?q=${encodeURIComponent(intent.tiktok)}`,
                 actionText: 'Search TikTok ↗'
             },
             {
                 name: 'Instagram Reels',
-                tag: 'Reels Tag Route',
+                tag: 'Reels Edit Route',
                 color: '#E1306C',
                 description: `Compiled Tag Route: #${intent.instagramTag}`,
                 url: `https://www.instagram.com/explore/tags/${encodeURIComponent(intent.instagramTag)}/`,
@@ -128,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         searchTitle.textContent = 'Select a Platform Route';
         resultsGrid.innerHTML = `
             <div class="placeholder-msg">
-                <p>Enter your subject and song/artist combo above to compile optimized search queries.</p>
+                <p>Enter any trendy subject, streamer, meme, or song combo above to compile live routes.</p>
             </div>
         `;
     }
