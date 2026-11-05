@@ -1,33 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Driftfind – find the exact edit</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Engine | Intent-Based Video Discovery</title>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <main id="app">
-    <h1>Drift<span>find</span></h1>
-    <p class="tagline">Describe the exact edit, meme, mood or sound. We open it in the app you love.</p>
+    <main class="container">
+        <header class="header">
+            <span class="badge">Intent Compiler v3.0</span>
+            <h1>Pulse Engine</h1>
+            <p>Translating user intent into optimized platform queries across YouTube, TikTok, and Instagram.</p>
+        </header>
 
-    <div class="bar">
-      <input id="searchInput" type="text" placeholder="e.g. marlon zyro slowed edits" autocomplete="off" aria-label="Search for a video">
-      <button id="clearBtn" class="clear" aria-label="Clear search">&times;</button>
-      <button id="searchBtn" class="go">Search</button>
-    </div>
+        <section class="search-box">
+            <div class="search-input-wrap">
+                <input type="text" id="searchInput" placeholder="Try 'paul george sza' or 'kyrie irving dave'..." autocomplete="off">
+                <button id="clearBtn" class="clear-btn">&times;</button>
+            </div>
+            <button id="searchBtn" class="primary-btn">Match & Route</button>
+        </section>
 
-    <div id="examples" class="examples"></div>
+        <section id="resultsContainer">
+            <h2 id="searchTitle" class="section-title">Select a Platform Route</h2>
+            <div id="resultsGrid" class="menu-grid">
+                <div class="placeholder-msg">
+                    <p>Enter your subject and song/artist combo above to compile optimized search queries.</p>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    <section id="resultsSection" hidden>
-      <h2 id="searchTitle"></h2>
-      <div id="understood" class="understood"></div>
-      <div id="filters" class="filters"></div>
-      <div id="resultsGrid" class="grid"></div>
-    </section>
-
-    <p id="status" class="status"></p>
-  </main>
-  <script src="script.js"></script>
+    <script src="./script.js"></script>
 </body>
 </html>
