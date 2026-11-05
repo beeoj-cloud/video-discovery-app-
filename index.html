@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pulse Engine | Multi-Platform Discovery</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <main class="container">
@@ -15,19 +15,23 @@
         </header>
 
         <section class="search-box">
-            <input type="text" id="searchInput" placeholder="Try 'Kyrie Irving Dave edit' or 'moody basketball'..." autocomplete="off">
-            <button id="clearBtn" class="clear-btn">&times;</button>
+            <div class="search-input-wrap">
+                <input type="text" id="searchInput" placeholder="Try 'Kyrie Irving Dave edit'..." autocomplete="off">
+                <button id="clearBtn" class="clear-btn">&times;</button>
+            </div>
             <button id="searchBtn" class="primary-btn">Explore Platforms</button>
         </section>
 
         <section id="resultsContainer">
             <h2 id="searchTitle" class="section-title">Select a Platform to Search</h2>
             <div id="resultsGrid" class="menu-grid">
-                <!-- Platform cards render here dynamically -->
+                <div class="placeholder-msg">
+                    <p>Type a phrase above and click Explore to generate search routes.</p>
+                </div>
             </div>
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <script src="./script.js"></script>
 </body>
 </html>
