@@ -21,26 +21,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') generatePlatformMenu();
     });
 
-    // Words that explicitly indicate the user wants an edit/mashup
+    // Explicit edit/audio trigger words
     const editKeywords = ['edit', 'edits', 'audio', 'song', 'remix', 'mashup', 'phonk', 'slowed', 'reverb', 'montage'];
 
-    // Strict dictionary of confirmed shorthand trend codes
+    // Known trend shorthand mapping (only triggered when explicitly matched)
     const mediaDictionary = {
-        'phonk': 'drift phonk bass boost mix',
-        'slowed': 'slowed and reverb audio',
-        'drill': 'uk drill ny drill beat drop',
-        'rage': 'rage beat synth loop',
-        'bp': 'Blackpink audio remix beat drop',
-        'dave': 'Dave rap vocal sync track',
-        'sza': 'SZA vocal track snooze kill bill'
+        'phonk': 'phonk edit',
+        'slowed': 'slowed reverb edit',
+        'drill': 'drill beat edit',
+        'rage': 'rage edit',
+        'bp': 'bp audio edit',
+        'dave': 'dave edit',
+        'sza': 'sza edit'
     };
 
     /**
-     * Intent Classifier & Router Engine
+     * Intent Compiler Engine:
+     * Routes general prompts naturally and expands niche audio/trend combos safely.
      */
     function compileIntent(rawInput) {
         const clean = rawInput.trim().toLowerCase();
-        // Keep alphanumeric spaces only for security/URL sanitization
         const sanitized = clean.replace(/[^a-z0-9\s]/g, '');
         const words = sanitized.split(/\s+/).filter(w => w.length > 0);
 
@@ -55,21 +55,19 @@ document.addEventListener('DOMContentLoaded', () => {
         let instagramQuery = '';
 
         if (containsEditKeyword) {
-            // Case 1: User explicitly asked for edits/audio/remixes
+            // Case 1: Explicit edit request (e.g., "marlon edit")
             youtubeQuery = rawInput;
             tiktokQuery = sanitized;
             instagramQuery = sanitized;
         } else if (isKnownShorthand && words.length >= 2) {
-            // Case 2: Multi-subject prompt ending in a KNOWN trend shorthand (e.g., "kyrie irving dave", "paul george sza")
+            // Case 2: Multi-term query ending in known music/trend shorthand (e.g., "kyrie irving dave", "paul george sza")
             const subject = words.slice(0, -1).join(' ');
-            const audioContext = mediaDictionary[lastWord];
 
-            youtubeQuery = `${subject}${lastWord} edit`;
-            tiktokQuery = `${subject}${lastWord} edit audio`;
-            instagramQuery = `${subject}${lastWord} edit`;
+            youtubeQuery = `${subject} ${lastWord} edit`;
+            tiktokQuery = `${subject} ${lastWord} edit`;
+            instagramQuery = `${subject} ${lastWord} edit`;
         } else {
-            // Case 3: Standard queries (e.g., "wolfy playz gw2", "alfred", "kai cenat")
-            // Pass the exact query naturally without forcing quotes, edits, or extra operators!
+            // Case 3: Natural creator, gaming, or general queries (e.g., "wolfy playz gw2", "alfred")
             youtubeQuery = rawInput;
             tiktokQuery = sanitized;
             instagramQuery = sanitized;
@@ -98,21 +96,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: 'YouTube',
                 tag: 'Targeted Search Query',
                 color: '#FF0000',
-                description: `Compiled Query: ${intent.youtube}`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(intent.youtube)}`,
+                description: `Compiled Query: ${intent.youtube}`,
+                url: `https://www.youtube.com/results?search_query=${encodeURIComponent(intent.youtube)}`,
                 actionText: 'Search YouTube ↗'
             },
             {
                 name: 'TikTok',
                 tag: 'Native Platform Search',
                 color: '#00F2FE',
-                description: `Compiled Query: "${intent.tiktok}"`, url: `https://www.tiktok.com/search?q=${encodeURIComponent(intent.tiktok)}`,
+                description: `Compiled Query: "${intent.tiktok}"`,
+                url: `https://www.tiktok.com/search?q=${encodeURIComponent(intent.tiktok)}`,
                 actionText: 'Search TikTok ↗'
             },
             {
                 name: 'Instagram Reels',
                 tag: 'Universal Keyword Index',
                 color: '#E1306C',
-                description: `Compiled Keyword Query: "${intent.instagram}"`, url: `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(intent.instagram)}`,
+                description: `Compiled Keyword Query: "${intent.instagram}"`,
+                url: `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(intent.instagram)}`,
                 actionText: 'Search Reels ↗'
             }
         ];
@@ -126,4 +127,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="platform-tag">${p.tag}</span>
                 </div>
                 <p class="card-desc"><strong>${p.description}</strong></p>
-                <a href="${p.url}"
+                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="platform-btn">
+                    ${p.actionText}
+                </a>
+            `;
+            resultsGrid.appendChild(card);
+        });
+    }
+
+    function resetMenu() {
+        searchTitle.textContent = 'Select a Platform Route';
+        resultsGrid.innerHTML = `
+            <div class="placeholder-msg">
+                <p>Enter any subject, creator, game, or edit combo above to compile live routes.</p>
+            </div>
+        `;
+    }
+});
