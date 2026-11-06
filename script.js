@@ -21,56 +21,54 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') generatePlatformMenu();
     });
 
+    // Known edit/music indicators
+    const editKeywords = ['edit', 'edits', 'audio', 'song', 'remix', 'mashup', 'phonk', 'slowed', 'reverb', 'montage'];
+    
+    // Modern music/trend shorthand mapping (only applied when relevant)
     const mediaDictionary = {
-        'phonk': { context: 'drift phonk bass boost mix audio' },
-        'slowed': { context: 'slowed and reverb audio remix' },
-        'drill': { context: 'uk drill ny drill beat drop edit' },
-        'rage': { context: 'rage beat synth loop underground rap' },
-        'bp': { context: 'Blackpink trend audio remix beat drop' },
-        'dave': { context: 'Dave rap vocal sync audio track' },
-        'sza': { context: 'SZA soulful vocal track snooze kill bill' },
-        'speed': { context: 'IShowSpeed screaming meme edit audio' },
-        'kai': { context: 'Kai Cenat stream funny moments edit' },
-        'fn': { context: 'Fortnite montage cinematic edit audio' },
-        'val': { context: 'Valorant clips montage phonk edit' }
+        'phonk': 'drift phonk bass boost mix',
+        'slowed': 'slowed and reverb audio',
+        'drill': 'uk drill ny drill beat drop',
+        'rage': 'rage beat synth loop',
+        'bp': 'Blackpink audio remix beat drop',
+        'dave': 'Dave rap vocal sync track',
+        'sza': 'SZA vocal track snooze kill bill'
     };
 
     /**
-     * Universal Intent Compiler:
-     * Builds native search strings for YouTube, TikTok, and Instagram Keyword Search.
+     * Intent Classifier & Compiler:
+     * Distinguishes between gameplay/creator searches vs niche edits/audio mashups.
      */
     function compileIntent(rawInput) {
         const clean = rawInput.trim().toLowerCase();
-        const words = clean.split(/\s+/).filter(w => w.length > 0);
+        const sanitized = clean.replace(/[^a-z0-9\s]/g, '');
+        const words = sanitized.split(/\s+/).filter(w => w.length > 0);
 
         if (words.length === 0) return null;
 
+        const containsEditKeyword = words.some(w => editKeywords.includes(w));
         const lastWord = words[words.length - 1];
-        const subject = words.slice(0, -1).join(' ');
-
-        let resolvedContext = lastWord;
-
-        if (mediaDictionary[lastWord]) {
-            resolvedContext = mediaDictionary[lastWord].context;
-        } else if (words.length >= 2) {
-            resolvedContext = `${lastWord} edit remix audio`;
-        } else {
-            resolvedContext = `${lastWord} edit trend audio`;
-        }
+        const hasTrendShorthand = mediaDictionary[lastWord] !== undefined;
 
         let youtubeQuery = '';
         let tiktokQuery = '';
         let instagramQuery = '';
 
-        if (subject) {
-            youtubeQuery = `"${subject}" ("${resolvedContext}" OR "${lastWord}") edit`;
-            tiktokQuery = `${subject} ${lastWord} edit audio`;
-            // Instagram Keyword Search across captions, audio & transcriptions
-            instagramQuery = `${subject} ${lastWord} edit`;
-        } else {
-            youtubeQuery = `"${lastWord}" edit remix audio`;
-            tiktokQuery = `${lastWord} edit trend audio`;
-            instagramQuery = `${lastWord} edit`;
+        if (containsEditKeyword) {
+            // Case 1: User explicitly asked for edits/audio/montages
+            youtubeQuery = rawInput;
+            tiktokQuery = sanitized;
+            instagramQuery = sanitized;
+        } else if (hasTrendShorthand && words.length >= 2) {
+            // Case 2: Multi-subject prompt with music shorthand (e.g., "kyrie irving dave" or "paul george sza")
+            const subject = words.slice(0, -1).join(' ');
+            const audioContext = mediaDictionary[lastWord];
+
+            youtubeQuery = `"${subject}" ("${audioContext}" OR "${lastWord}") edit`;
+            tiktokQuery = `${subject}${lastWord} edit audio`;
+            instagramQuery = `${subject} ${lastWord} edit`; } else { // Case 3: Standard creator/game/general query (e.g., "wolfy playz gw2" or "alfred") // Do NOT force "edit" or extra fluff! youtubeQuery = `"${rawInput}"`;
+            tiktokQuery = sanitized;
+            instagramQuery = sanitized;
         }
 
         return {
@@ -88,59 +86,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const intent = compileIntent(rawInput);
         if (!intent) return;
 
-        searchTitle.textContent = `Trending Routes for "${rawInput}":`;
+        searchTitle.textContent = `Compiled Routes for "${rawInput}":`;
         resultsGrid.innerHTML = '';
 
         const platforms = [
             {
                 name: 'YouTube',
-                tag: 'Audio-Matched Query',
+                tag: 'Targeted Search Query',
                 color: '#FF0000',
-                description: `Compiled Query: ${intent.youtube}`,
-                url: `https://www.youtube.com/results?search_query=${encodeURIComponent(intent.youtube)}`,
+                description: `Compiled Query: ${intent.youtube}`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(intent.youtube)}`,
                 actionText: 'Search YouTube ↗'
             },
             {
                 name: 'TikTok',
-                tag: 'Viral Sound Sync',
+                tag: 'Native Platform Search',
                 color: '#00F2FE',
-                description: `Compiled Query: ${intent.tiktok}`,
-                url: `https://www.tiktok.com/search?q=${encodeURIComponent(intent.tiktok)}`,
+                description: `Compiled Query: "${intent.tiktok}"`, url: `https://www.tiktok.com/search?q=${encodeURIComponent(intent.tiktok)}`,
                 actionText: 'Search TikTok ↗'
             },
             {
                 name: 'Instagram Reels',
-                tag: 'Universal Reels Index',
+                tag: 'Universal Keyword Index',
                 color: '#E1306C',
                 description: `Compiled Keyword Query: "${intent.instagram}"`,
-                url: `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(intent.instagram)}`,
-                actionText: 'Search Reels ↗'
-            }
-        ];
-
-        platforms.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'menu-card';
-            card.innerHTML = `
-                <div class="card-header">
-                    <span class="platform-badge" style="background-color: ${p.color};">${p.name}</span>
-                    <span class="platform-tag">${p.tag}</span>
-                </div>
-                <p class="card-desc"><strong>${p.description}</strong></p>
-                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="platform-btn">
-                    ${p.actionText}
-                </a>
-            `;
-            resultsGrid.appendChild(card);
-        });
-    }
-
-    function resetMenu() {
-        searchTitle.textContent = 'Select a Platform Route';
-        resultsGrid.innerHTML = `
-            <div class="placeholder-msg">
-                <p>Enter any trendy subject, streamer, meme, or song combo above to compile live routes.</p>
-            </div>
-        `;
-    }
-});
+                url: `
