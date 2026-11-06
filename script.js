@@ -21,10 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') generatePlatformMenu();
     });
 
-    // Known edit/music indicators
+    // Words that explicitly indicate the user wants an edit/mashup
     const editKeywords = ['edit', 'edits', 'audio', 'song', 'remix', 'mashup', 'phonk', 'slowed', 'reverb', 'montage'];
-    
-    // Modern music/trend shorthand mapping (only applied when relevant)
+
+    // Strict dictionary of confirmed shorthand trend codes
     const mediaDictionary = {
         'phonk': 'drift phonk bass boost mix',
         'slowed': 'slowed and reverb audio',
@@ -36,11 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     /**
-     * Intent Classifier & Compiler:
-     * Distinguishes between gameplay/creator searches vs niche edits/audio mashups.
+     * Intent Classifier & Router Engine
      */
     function compileIntent(rawInput) {
         const clean = rawInput.trim().toLowerCase();
+        // Keep alphanumeric spaces only for security/URL sanitization
         const sanitized = clean.replace(/[^a-z0-9\s]/g, '');
         const words = sanitized.split(/\s+/).filter(w => w.length > 0);
 
@@ -48,25 +48,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const containsEditKeyword = words.some(w => editKeywords.includes(w));
         const lastWord = words[words.length - 1];
-        const hasTrendShorthand = mediaDictionary[lastWord] !== undefined;
+        const isKnownShorthand = mediaDictionary[lastWord] !== undefined;
 
         let youtubeQuery = '';
         let tiktokQuery = '';
         let instagramQuery = '';
 
         if (containsEditKeyword) {
-            // Case 1: User explicitly asked for edits/audio/montages
+            // Case 1: User explicitly asked for edits/audio/remixes
             youtubeQuery = rawInput;
             tiktokQuery = sanitized;
             instagramQuery = sanitized;
-        } else if (hasTrendShorthand && words.length >= 2) {
-            // Case 2: Multi-subject prompt with music shorthand (e.g., "kyrie irving dave" or "paul george sza")
+        } else if (isKnownShorthand && words.length >= 2) {
+            // Case 2: Multi-subject prompt ending in a KNOWN trend shorthand (e.g., "kyrie irving dave", "paul george sza")
             const subject = words.slice(0, -1).join(' ');
             const audioContext = mediaDictionary[lastWord];
 
-            youtubeQuery = `"${subject}" ("${audioContext}" OR "${lastWord}") edit`;
+            youtubeQuery = `${subject}${lastWord} edit`;
             tiktokQuery = `${subject}${lastWord} edit audio`;
-            instagramQuery = `${subject} ${lastWord} edit`; } else { // Case 3: Standard creator/game/general query (e.g., "wolfy playz gw2" or "alfred") // Do NOT force "edit" or extra fluff! youtubeQuery = `"${rawInput}"`;
+            instagramQuery = `${subject}${lastWord} edit`;
+        } else {
+            // Case 3: Standard queries (e.g., "wolfy playz gw2", "alfred", "kai cenat")
+            // Pass the exact query naturally without forcing quotes, edits, or extra operators!
+            youtubeQuery = rawInput;
             tiktokQuery = sanitized;
             instagramQuery = sanitized;
         }
@@ -108,5 +112,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: 'Instagram Reels',
                 tag: 'Universal Keyword Index',
                 color: '#E1306C',
-                description: `Compiled Keyword Query: "${intent.instagram}"`,
-                url: `
+                description: `Compiled Keyword Query: "${intent.instagram}"`, url: `https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(intent.instagram)}`,
+                actionText: 'Search Reels ↗'
+            }
+        ];
+
+        platforms.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'menu-card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="platform-badge" style="background-color: ${p.color};">${p.name}</span>
+                    <span class="platform-tag">${p.tag}</span>
+                </div>
+                <p class="card-desc"><strong>${p.description}</strong></p>
+                <a href="${p.url}"
